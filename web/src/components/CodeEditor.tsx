@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import Editor, { type BeforeMount, type Monaco, type OnMount } from '@monaco-editor/react'
 import type { editor as MonacoEditorNs, Position as MonacoPosition } from 'monaco-editor'
 import { getPythonCompletions, prefetchPythonIntelliSense } from '../lib/sandbox'
+import { CSS_PROPERTIES, HTML_TAGS, JS_KEYWORDS, JS_MEMBERS } from '../lib/staticCompletions'
 
 export type EditorLanguage = 'html' | 'css' | 'javascript' | 'python'
 
@@ -97,13 +98,7 @@ function registerPythonIntelliSense(monaco: Monaco) {
     triggerCharacters: ['.'],
     provideCompletionItems: async (model: MonacoEditorNs.ITextModel, position: MonacoPosition) => {
       const completions = await getPythonCompletions(model.getValue(), position.lineNumber, position.column - 1)
-      const word = model.getWordUntilPosition(position)
-      const range = {
-        startLineNumber: position.lineNumber,
-        endLineNumber: position.lineNumber,
-        startColumn: word.startColumn,
-        endColumn: word.endColumn,
-      }
+      const range = rangeForWord(model, position)
       return {
         suggestions: completions.map((c) => ({
           label: c.label,
@@ -120,9 +115,98 @@ function registerPythonIntelliSense(monaco: Monaco) {
   })
 }
 
+function rangeForWord(model: MonacoEditorNs.ITextModel, position: MonacoPosition) {
+  const word = model.getWordUntilPosition(position)
+  return {
+    startLineNumber: position.lineNumber,
+    endLineNumber: position.lineNumber,
+    startColumn: word.startColumn,
+    endColumn: word.endColumn,
+  }
+}
+
+let htmlProviderRegistered = false
+
+/** Worker-free tag-name completion for HTML — see the note atop staticCompletions.ts. */
+function registerHtmlFallback(monaco: Monaco) {
+  if (htmlProviderRegistered) return
+  htmlProviderRegistered = true
+
+  monaco.languages.registerCompletionItemProvider('html', {
+    triggerCharacters: ['<'],
+    provideCompletionItems: (model: MonacoEditorNs.ITextModel, position: MonacoPosition) => {
+      const beforeCursor = model.getLineContent(position.lineNumber).slice(0, position.column - 1)
+      if (!/<[a-zA-Z]*$/.test(beforeCursor)) return { suggestions: [] }
+      const range = rangeForWord(model, position)
+      return {
+        suggestions: HTML_TAGS.map((tag) => ({
+          label: tag,
+          kind: monaco.languages.CompletionItemKind.Property,
+          insertText: tag,
+          range,
+        })),
+      }
+    },
+  })
+}
+
+let cssProviderRegistered = false
+
+/** Worker-free property-name completion for CSS — see the note atop staticCompletions.ts. */
+function registerCssFallback(monaco: Monaco) {
+  if (cssProviderRegistered) return
+  cssProviderRegistered = true
+
+  monaco.languages.registerCompletionItemProvider('css', {
+    provideCompletionItems: (model: MonacoEditorNs.ITextModel, position: MonacoPosition) => {
+      const beforeCursor = model.getLineContent(position.lineNumber).slice(0, position.column - 1)
+      // Skip once we're past a ':' on this declaration — that means typing a value, not a property.
+      if (/:[^;{}]*$/.test(beforeCursor)) return { suggestions: [] }
+      const range = rangeForWord(model, position)
+      return {
+        suggestions: CSS_PROPERTIES.map((prop) => ({
+          label: prop,
+          kind: monaco.languages.CompletionItemKind.Property,
+          insertText: prop,
+          range,
+        })),
+      }
+    },
+  })
+}
+
+let jsProviderRegistered = false
+
+/** Worker-free keyword/member completion for JavaScript — see the note atop staticCompletions.ts. */
+function registerJsFallback(monaco: Monaco) {
+  if (jsProviderRegistered) return
+  jsProviderRegistered = true
+
+  monaco.languages.registerCompletionItemProvider('javascript', {
+    triggerCharacters: ['.'],
+    provideCompletionItems: (model: MonacoEditorNs.ITextModel, position: MonacoPosition) => {
+      const beforeCursor = model.getLineContent(position.lineNumber).slice(0, position.column - 1)
+      const isMemberAccess = /\.\s*[A-Za-z_$]*$/.test(beforeCursor)
+      const range = rangeForWord(model, position)
+      const K = monaco.languages.CompletionItemKind
+      return {
+        suggestions: (isMemberAccess ? JS_MEMBERS : JS_KEYWORDS).map((label) => ({
+          label,
+          kind: isMemberAccess ? K.Method : K.Keyword,
+          insertText: label,
+          range,
+        })),
+      }
+    },
+  })
+}
+
 const beforeMount: BeforeMount = (monaco) => {
   defineMonokaiTheme(monaco)
   registerPythonIntelliSense(monaco)
+  registerHtmlFallback(monaco)
+  registerCssFallback(monaco)
+  registerJsFallback(monaco)
 }
 
 export function CodeEditor({
