@@ -1,6 +1,7 @@
 import { Badge, ListRow, ProgressBar } from '@freeappstore/sdk/ui'
 import type { Course, ProgressMap } from '../types'
 import { courseCompletionPct, isEnrolled, isLessonUnlocked } from '../lib/progress'
+import { LanguageIcon } from './LanguageIcon'
 
 export function CourseView({
   course,
@@ -26,7 +27,7 @@ export function CourseView({
       </button>
 
       <div className="mt-3 flex items-start gap-4">
-        <span className="text-4xl">{course.icon}</span>
+        <LanguageIcon id={course.icon} className="h-11 w-11 shrink-0 rounded-lg" />
         <div className="flex-1">
           <h1 className="display-font text-2xl font-bold text-[var(--ink)]">{course.title}</h1>
           <p className="mt-1 text-sm text-[var(--muted)]">{course.description}</p>

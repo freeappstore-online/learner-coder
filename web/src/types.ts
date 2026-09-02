@@ -44,11 +44,13 @@ export interface Lesson {
   exercise: Exercise
 }
 
+export type CourseIconId = 'html5' | 'css3' | 'javascript' | 'python'
+
 export interface Course {
   id: string
   title: string
   description: string
-  icon: string
+  icon: CourseIconId
   lessons: Lesson[]
 }
 

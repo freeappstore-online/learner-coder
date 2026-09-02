@@ -18,7 +18,7 @@ export const courses: Course[] = [
     id: 'html-foundations',
     title: 'HTML Foundations',
     description: 'Learn the building blocks of every web page: tags, elements, and structure.',
-    icon: '🌐',
+    icon: 'html5',
     lessons: [
       {
         id: 'what-is-html',
@@ -140,7 +140,7 @@ export const courses: Course[] = [
     id: 'css-styling',
     title: 'CSS Styling',
     description: 'Turn plain HTML into a styled, laid-out page using selectors and the box model.',
-    icon: '🎨',
+    icon: 'css3',
     lessons: [
       {
         id: 'what-is-css',
@@ -263,7 +263,7 @@ export const courses: Course[] = [
     id: 'javascript-basics',
     title: 'JavaScript Basics',
     description: 'Start programming for the web: variables, functions, conditionals, and loops.',
-    icon: '⚡',
+    icon: 'javascript',
     lessons: [
       {
         id: 'variables',
@@ -362,7 +362,7 @@ export const courses: Course[] = [
     id: 'python-fundamentals',
     title: 'Python Fundamentals',
     description: 'A gentle introduction to Python: variables, lists, loops, and functions.',
-    icon: '🐍',
+    icon: 'python',
     lessons: [
       {
         id: 'hello-python',

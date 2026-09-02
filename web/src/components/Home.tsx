@@ -7,6 +7,7 @@ import {
   totalCoursesCompleted,
   totalLessonsCompleted,
 } from '../lib/progress'
+import { LanguageIcon } from './LanguageIcon'
 
 export function Home({
   name,
@@ -59,7 +60,7 @@ export function Home({
           {inProgress.map((course) => (
             <Card key={course.id} onClick={() => onOpenCourse(course.id)} style={{ cursor: 'pointer' }}>
               <div className="flex items-start gap-3">
-                <span className="text-2xl">{course.icon}</span>
+                <LanguageIcon id={course.icon} className="h-7 w-7 shrink-0 rounded" />
                 <div className="min-w-0 flex-1">
                   <div className="font-semibold text-[var(--ink)]">{course.title}</div>
                   <div className="mt-2">
@@ -79,7 +80,7 @@ export function Home({
             {completed.map((course) => (
               <Card key={course.id} onClick={() => onOpenCourse(course.id)} style={{ cursor: 'pointer' }}>
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl">{course.icon}</span>
+                  <LanguageIcon id={course.icon} className="h-7 w-7 shrink-0 rounded" />
                   <div className="flex-1 font-semibold text-[var(--ink)]">{course.title}</div>
                   <Badge variant="success">Done</Badge>
                 </div>

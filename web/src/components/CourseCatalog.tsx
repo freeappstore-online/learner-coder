@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Card, SearchInput, Badge, ProgressBar } from '@freeappstore/sdk/ui'
 import type { Course, ProgressMap } from '../types'
 import { courseCompletionPct, isCourseComplete, isEnrolled } from '../lib/progress'
+import { LanguageIcon } from './LanguageIcon'
 
 export function CourseCatalog({
   courses,
@@ -35,7 +36,7 @@ export function CourseCatalog({
           return (
             <Card key={course.id} onClick={() => onOpenCourse(course.id)} style={{ cursor: 'pointer' }}>
               <div className="flex items-start gap-3">
-                <span className="text-2xl">{course.icon}</span>
+                <LanguageIcon id={course.icon} className="h-7 w-7 shrink-0 rounded" />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <span className="font-semibold text-[var(--ink)]">{course.title}</span>

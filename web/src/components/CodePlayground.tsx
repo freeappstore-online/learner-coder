@@ -17,7 +17,7 @@ const FILE_NAME: Record<Exercise['type'], string> = {
 }
 
 const EDITOR_LANGUAGE: Record<Exercise['type'], EditorLanguage> = {
-  html: 'markup',
+  html: 'html',
   css: 'css',
   js: 'javascript',
   python: 'python',
@@ -157,7 +157,7 @@ export function CodePlayground({
 
       {/* Editor */}
       <div className="min-h-0 flex-1">
-        <CodeEditor value={code} onChange={setCode} language={EDITOR_LANGUAGE[exercise.type]} fill />
+        <CodeEditor value={code} onChange={setCode} language={EDITOR_LANGUAGE[exercise.type]} />
       </div>
 
       {pyLoading && (
