@@ -1,8 +1,12 @@
-import { useRef, useState } from 'react'
+import { lazy, Suspense, useRef, useState } from 'react'
 import type { CheckOutcome, Exercise, RunResult } from '../types'
 import { runJsCode, runPythonCode } from '../lib/sandbox'
-import { CodeEditor, type EditorLanguage } from './CodeEditor'
+import type { EditorLanguage } from './CodeEditor'
 import { FloatingPreviewWindow } from './FloatingPreviewWindow'
+
+// Monaco is a multi-MB dependency — load it only once a lesson's coding exercise actually
+// renders, not as part of the app's initial bundle.
+const CodeEditor = lazy(() => import('./CodeEditor'))
 
 interface PendingCssCheck {
   code: string
@@ -157,7 +161,15 @@ export function CodePlayground({
 
       {/* Editor */}
       <div className="min-h-0 flex-1">
-        <CodeEditor value={code} onChange={setCode} language={EDITOR_LANGUAGE[exercise.type]} />
+        <Suspense
+          fallback={
+            <div className="flex h-full w-full items-center justify-center text-xs" style={{ color: MONOKAI.muted }}>
+              Loading editor…
+            </div>
+          }
+        >
+          <CodeEditor value={code} onChange={setCode} language={EDITOR_LANGUAGE[exercise.type]} />
+        </Suspense>
       </div>
 
       {pyLoading && (
