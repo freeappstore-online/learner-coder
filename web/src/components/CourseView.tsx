@@ -1,3 +1,4 @@
+import { Fragment } from 'react'
 import { Badge, ListRow, ProgressBar } from '@freeappstore/sdk/ui'
 import type { Course, ProgressMap } from '../types'
 import { courseCompletionPct, isEnrolled, isLessonUnlocked } from '../lib/progress'
@@ -50,20 +51,45 @@ export function CourseView({
 
       <h2 className="mt-6 text-sm font-semibold uppercase tracking-wide text-[var(--muted)]">Lessons</h2>
       <div className="mt-2 flex flex-col gap-1">
-        {course.lessons.map((lesson, i) => {
-          const done = completedLessons.includes(lesson.id)
-          const unlocked = enrolled && isLessonUnlocked(progress, course, i)
-          return (
-            <ListRow
-              key={lesson.id}
-              icon={done ? '✅' : unlocked ? `${i + 1}` : '🔒'}
-              title={lesson.title}
-              subtitle={`${lesson.minutes} min`}
-              trailing={done ? <Badge variant="success">Done</Badge> : undefined}
-              onClick={unlocked ? () => onOpenLesson(lesson.id) : undefined}
-            />
-          )
-        })}
+        {(() => {
+          let currentPartNumber: number | undefined
+          let subNumber = 0
+
+          return course.lessons.map((lesson, i) => {
+            const done = completedLessons.includes(lesson.id)
+            const unlocked = enrolled && isLessonUnlocked(progress, course, i)
+
+            let numberLabel = `${i + 1}`
+            let showPartHeader = false
+            if (lesson.part) {
+              if (lesson.part.number !== currentPartNumber) {
+                currentPartNumber = lesson.part.number
+                subNumber = 1
+                showPartHeader = true
+              } else {
+                subNumber += 1
+              }
+              numberLabel = `${lesson.part.number}.${subNumber}`
+            }
+
+            return (
+              <Fragment key={lesson.id}>
+                {showPartHeader && (
+                  <div className="mb-1 mt-4 px-1 text-xs font-semibold uppercase tracking-wide text-[var(--muted)] first:mt-0">
+                    Part {lesson.part!.number} · {lesson.part!.title}
+                  </div>
+                )}
+                <ListRow
+                  icon={done ? '✅' : unlocked ? numberLabel : '🔒'}
+                  title={lesson.title}
+                  subtitle={`${lesson.minutes} min`}
+                  trailing={done ? <Badge variant="success">Done</Badge> : undefined}
+                  onClick={unlocked ? () => onOpenLesson(lesson.id) : undefined}
+                />
+              </Fragment>
+            )
+          })
+        })()}
       </div>
     </div>
   )

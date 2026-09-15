@@ -1,4 +1,4 @@
-import { lazy, Suspense, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import type { CheckOutcome, Exercise, RunResult } from '../types'
 import { runJsCode, runPythonCode } from '../lib/sandbox'
 import type { EditorLanguage } from './CodeEditor'
@@ -25,6 +25,18 @@ const EDITOR_LANGUAGE: Record<Exercise['type'], EditorLanguage> = {
   css: 'css',
   js: 'javascript',
   python: 'python',
+}
+
+const RESET_POPOVER_WIDTH = 256
+const RESET_POPOVER_VIEWPORT_MARGIN = 12
+const RESET_POPOVER_ARROW_SIZE = 12
+
+// The app's own surface/border/ink tokens, not the dark Monokai IDE palette — so the popover reads
+// as a brighter card against the dark toolbar, in whichever light/dark theme the user has chosen.
+const RESET_POPOVER = {
+  bg: 'var(--surface)',
+  border: 'var(--border)',
+  text: 'var(--ink)',
 }
 
 // Monokai palette — the IDE pane always looks like this, independent of the app's own light/dark theme.
@@ -56,10 +68,28 @@ export function CodePlayground({
   const [previewOpen, setPreviewOpen] = useState(false)
   const [runToken, setRunToken] = useState(0)
   const [pyLoading, setPyLoading] = useState(false)
+  const [confirmResetOpen, setConfirmResetOpen] = useState(false)
+  const [resetPopoverPos, setResetPopoverPos] = useState({ top: 0, left: 0, arrowLeft: 0 })
 
   const iframeRef = useRef<HTMLIFrameElement>(null)
-  const paneRef = useRef<HTMLDivElement>(null)
   const pendingCssCheck = useRef<PendingCssCheck | null>(null)
+  const resetPopoverRef = useRef<HTMLDivElement>(null)
+  const resetBtnRef = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    if (!confirmResetOpen) return
+    function onDocMouseDown(e: MouseEvent) {
+      const target = e.target as Node
+      // The Reset button toggles the popover itself on click — if this listener also closed it on
+      // the button's mousedown, the click's own toggle would immediately reopen it right after.
+      if (resetBtnRef.current?.contains(target)) return
+      if (resetPopoverRef.current && !resetPopoverRef.current.contains(target)) {
+        setConfirmResetOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', onDocMouseDown)
+    return () => document.removeEventListener('mousedown', onDocMouseDown)
+  }, [confirmResetOpen])
 
   const finalize = (next: CheckOutcome) => {
     setOutcome(next)
@@ -121,8 +151,32 @@ export function CodePlayground({
 
   const isPreview = exercise.type === 'html' || exercise.type === 'css'
 
+  const openResetPopover = () => {
+    const btn = resetBtnRef.current
+    if (!btn) return
+    const r = btn.getBoundingClientRect()
+    const btnCenter = r.left + r.width / 2
+
+    // Center under the button by default, but slide inward if that would push either edge past
+    // the viewport — then re-point the arrow at the button's true center from wherever the box
+    // actually landed.
+    const idealLeft = btnCenter - RESET_POPOVER_WIDTH / 2
+    const maxLeft = window.innerWidth - RESET_POPOVER_WIDTH - RESET_POPOVER_VIEWPORT_MARGIN
+    const left = Math.min(Math.max(idealLeft, RESET_POPOVER_VIEWPORT_MARGIN), Math.max(RESET_POPOVER_VIEWPORT_MARGIN, maxLeft))
+    const top = r.bottom + 12
+
+    const arrowInset = RESET_POPOVER_ARROW_SIZE
+    const arrowLeft = Math.min(
+      Math.max(btnCenter - left - RESET_POPOVER_ARROW_SIZE / 2, arrowInset),
+      RESET_POPOVER_WIDTH - RESET_POPOVER_ARROW_SIZE - arrowInset,
+    )
+
+    setResetPopoverPos({ top, left, arrowLeft })
+    setConfirmResetOpen((o) => !o)
+  }
+
   return (
-    <div ref={paneRef} className="flex h-full min-h-0 flex-1 flex-col" style={{ background: MONOKAI.bg }}>
+    <div className="flex h-full min-h-0 flex-1 flex-col" style={{ background: MONOKAI.bg }}>
       {/* Toolbar */}
       <div
         className="flex shrink-0 items-center justify-between border-b px-4 py-2"
@@ -132,22 +186,65 @@ export function CodePlayground({
           {FILE_NAME[exercise.type]}
         </span>
         <div className="flex gap-2">
-          {isPreview && previewDoc !== null && !previewOpen && (
+          <div className="relative">
             <button
-              onClick={() => setPreviewOpen(true)}
+              ref={resetBtnRef}
+              onClick={openResetPopover}
               className="rounded-lg border px-3 py-1.5 text-xs font-semibold"
               style={{ borderColor: MONOKAI.border, color: MONOKAI.text }}
             >
-              Show preview
+              Reset
             </button>
-          )}
-          <button
-            onClick={reset}
-            className="rounded-lg border px-3 py-1.5 text-xs font-semibold"
-            style={{ borderColor: MONOKAI.border, color: MONOKAI.text }}
-          >
-            Reset
-          </button>
+            {confirmResetOpen && (
+              // Fixed-positioned in viewport pixels (computed in openResetPopover) rather than
+              // CSS-centered under the button, so it can slide inward when centering would push
+              // it past the screen edge — the arrow re-points at the button either way.
+              <div
+                ref={resetPopoverRef}
+                className="fixed z-20"
+                style={{ top: resetPopoverPos.top, left: resetPopoverPos.left, width: RESET_POPOVER_WIDTH }}
+              >
+                <div className="relative rounded-lg p-3 shadow-xl" style={{ background: RESET_POPOVER.bg, border: `1px solid ${RESET_POPOVER.border}` }}>
+                  <p className="text-xs leading-relaxed" style={{ color: RESET_POPOVER.text }}>
+                    Are you sure? This will remove your code and reset to template code.
+                  </p>
+                  <div className="mt-3 flex justify-end gap-2">
+                    <button
+                      onClick={() => setConfirmResetOpen(false)}
+                      className="rounded-md px-2.5 py-1 text-xs font-semibold"
+                      style={{ color: RESET_POPOVER.text }}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => {
+                        setConfirmResetOpen(false)
+                        reset()
+                      }}
+                      className="rounded-md px-2.5 py-1 text-xs font-semibold"
+                      style={{ background: MONOKAI.pink, color: '#ffffff' }}
+                    >
+                      Reset
+                    </button>
+                  </div>
+                </div>
+                {/* Rendered after the box so it paints on top, covering the segment of the box's
+                    own top border directly beneath it — otherwise that border draws a seam line
+                    right across the arrow where it meets the box. */}
+                <div
+                  className="absolute -top-1.5 rotate-45"
+                  style={{
+                    left: resetPopoverPos.arrowLeft,
+                    height: RESET_POPOVER_ARROW_SIZE,
+                    width: RESET_POPOVER_ARROW_SIZE,
+                    background: RESET_POPOVER.bg,
+                    borderLeft: `1px solid ${RESET_POPOVER.border}`,
+                    borderTop: `1px solid ${RESET_POPOVER.border}`,
+                  }}
+                />
+              </div>
+            )}
+          </div>
           <button
             onClick={handleRun}
             disabled={pyLoading}
@@ -187,7 +284,6 @@ export function CodePlayground({
           onClose={() => setPreviewOpen(false)}
           onIframeLoad={handleIframeLoad}
           iframeRef={iframeRef}
-          paneRef={paneRef}
         />
       )}
 

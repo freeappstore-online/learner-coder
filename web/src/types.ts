@@ -42,6 +42,10 @@ export interface Lesson {
   minutes: number
   content: string[]
   exercise: Exercise
+  /** Groups lessons into numbered sub-sections (1.1, 1.2, 2.1, ...) within a course. Lessons
+   * sharing the same `number` must be contiguous in the course's `lessons` array — the sub-number
+   * is just their position within that run. Omit entirely for a flat, un-grouped course. */
+  part?: { number: number; title: string }
 }
 
 export type CourseIconId = 'html5' | 'css3' | 'javascript' | 'python'

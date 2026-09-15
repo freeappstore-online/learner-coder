@@ -74,7 +74,6 @@ export function FloatingPreviewWindow({
   onClose,
   onIframeLoad,
   iframeRef,
-  paneRef,
 }: {
   visible: boolean
   srcDoc: string
@@ -82,8 +81,6 @@ export function FloatingPreviewWindow({
   onClose: () => void
   onIframeLoad: () => void
   iframeRef: React.RefObject<HTMLIFrameElement | null>
-  /** The IDE pane's own container — the window opens filling this area (with a margin) the first time. */
-  paneRef: React.RefObject<HTMLDivElement | null>
 }) {
   const [pos, setPos] = useState<Pos>({ x: 96, y: 96 })
   const [size, setSize] = useState<Size>({ width: 480, height: 360 })
@@ -92,19 +89,20 @@ export function FloatingPreviewWindow({
   const [sizePresets, setSizePresets] = useState<SizePreset[]>([])
   const hasPositionedRef = useRef(false)
 
-  // The first time the window opens, place it filling the IDE pane (right-hand side) rather than
-  // some arbitrary spot — margin from the viewport on top/right/bottom, and from the pane's own
-  // left edge (the divider against the reading pane) rather than the viewport's left edge.
+  // The first time the window opens, place it centered on the middle third of the screen's width,
+  // full height — not tied to the IDE pane's own layout.
   useEffect(() => {
     if (!visible || hasPositionedRef.current) return
-    const rect = paneRef.current?.getBoundingClientRect()
-    if (!rect) return
     hasPositionedRef.current = true
-    const width = Math.max(280, rect.width - WINDOW_MARGIN * 2)
-    const height = Math.max(200, rect.height - WINDOW_MARGIN * 2)
+
+    const width = Math.max(280, Math.round(window.innerWidth / 3))
+    const height = Math.max(200, window.innerHeight - WINDOW_MARGIN * 2)
+    const x = Math.round((window.innerWidth - width) / 2)
+    const y = WINDOW_MARGIN
+
     setSize({ width, height })
-    setPos({ x: rect.left + WINDOW_MARGIN, y: rect.top + WINDOW_MARGIN })
-  }, [visible, paneRef])
+    setPos(clampToViewport({ x, y }, { width, height }))
+  }, [visible])
 
   const dragRef = useRef<{ startX: number; startY: number; origX: number; origY: number; origW: number; origH: number } | null>(
     null,

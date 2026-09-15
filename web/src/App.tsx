@@ -101,6 +101,7 @@ export default function App() {
           const completedLessons = progress[course.id]?.completedLessons ?? []
           return (
             <LessonView
+              key={lesson.id}
               course={course}
               lesson={lesson}
               alreadyCompleted={completedLessons.includes(lesson.id)}
