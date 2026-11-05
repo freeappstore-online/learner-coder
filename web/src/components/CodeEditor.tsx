@@ -248,7 +248,7 @@ export function CodeEditor({
       loading={<div className="flex h-full w-full items-center justify-center text-xs text-[#8b8a85]">Loading editor…</div>}
       options={{
         fontSize: 13,
-        fontFamily: "ui-monospace, 'SF Mono', 'Cascadia Code', Menlo, Consolas, monospace",
+        fontFamily: "ui-monospace, 'SF Mono', Menlo, Consolas, monospace",
         minimap: { enabled: false },
         scrollBeyondLastLine: false,
         automaticLayout: true,

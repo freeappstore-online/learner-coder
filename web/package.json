@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@freeappstore/sdk": "^0.14.0",
+    "@freeappstore/sdk": "^0.16.39",
     "@monaco-editor/react": "^4.7.0",
     "monaco-editor": "^0.56.0",
     "react": "^19.2.5",
