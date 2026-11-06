@@ -1,0 +1,6 @@
+{
+  "appId": "learner-coder",
+  "applicationRoot": "web",
+  "outputPath": "web/dist",
+  "buildCommand": "pnpm build"
+}
