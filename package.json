@@ -1,10 +1,19 @@
 {
   "name": "learner-coder",
   "private": true,
-  "packageManager": "pnpm@9.15.4",
-  "engines": { "node": ">=22" },
-  "pnpm": { "onlyBuiltDependencies": ["esbuild"] },
-  "repository": { "type": "git", "url": "git+https://github.com/freeappstore-online/learner-coder.git" },
+  "packageManager": "pnpm@10.30.3",
+  "engines": {
+    "node": ">=22"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/freeappstore-online/learner-coder.git"
+  },
   "scripts": {
     "dev": "pnpm --filter @learner-coder/web dev",
     "build": "pnpm --filter @learner-coder/web build",
